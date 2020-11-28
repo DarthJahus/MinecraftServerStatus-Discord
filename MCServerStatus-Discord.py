@@ -19,17 +19,17 @@ __colors = {
 @__client.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(__client))
-    await test()
+    await mc_server_status()
 
 
-async def test():
+async def mc_server_status():
     try:
         with open("last_message.id", "r") as _f:
             _embed_message_id = int(_f.read())
     except:
         _embed_message_id = -1
     while True:
-        _req = requests.get("https://api.mcsrvstat.us/2/mcj.kabyle-gamers.com")
+        _req = requests.get("https://api.mcsrvstat.us/2/%s" % config["server_address"])
         if _req.status_code != 200:
             print("Error contacting API : %s" % _req.status_code)
         else:
@@ -56,7 +56,7 @@ async def test():
                     "Héros": "%s `%i / %i`" % ("<:steve_cool:764829193073983519>", _req_json["players"]["online"],_req_json["players"]["max"]),
                     "IP actuelle": "%s `%s`" % (emoji.emojize(":desktop:"), _req_json["ip"])
                 }
-                if _req_json["players"]["online"] > 0:
+                if config["show_user_list"] and _req_json["players"]["online"] > 0:
                     _server_data["Liste des héros présents"] = "\n• %s" % "\n• ".join(_req_json["players"]["list"])
                 for _key in _server_data:
                     _embed.add_field(
@@ -66,7 +66,7 @@ async def test():
                     )
             _embed.add_field(
                 name="Dernière mise à jour",
-                value="%s `%s`" % (emoji.emojize(":clock1:"),datetime.datetime.strftime(datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=1))), "%H:%M:%S"))
+                value="%s `%s`" % (emoji.emojize(":arrows_counterclockwise:"),datetime.datetime.strftime(datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=1))), "%H:%M:%S"))
             )
             if _embed_message_id == -1:
                 try:
