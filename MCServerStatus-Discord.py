@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import discord, json, requests, time, emoji, datetime
 
 

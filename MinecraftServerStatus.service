@@ -1,0 +1,14 @@
+[Unit]
+Description=Minecraft Server Status - Discord
+After=syslog.target
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bots/MinecraftServerStatus-Discord/MCServerStatus-Discord.py
+WorkingDirectory=/bots/MinecraftServerStatus-Discord/
+Restart=always
+RestartSec=600
+
+[Install]
+WantedBy=multi-user.target
