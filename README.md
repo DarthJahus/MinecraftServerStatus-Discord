@@ -1,12 +1,11 @@
 [![Discord](https://img.shields.io/discord/764789719032266752?label=Kabyle%20Minecraft%20on%20Discord)](https://discord.gg/PMHuPpD)
-[![DiscordBot](https://img.shields.io/badge/Discord%20Bot-Invite-blueviolet)](https://discord.com/api/oauth2/authorize?client_id=701526567763050517&permissions=379968&redirect_uri=https%3A%2F%2Fkabyle-gamers.com%2Fminecraft&scope=bot)
 
 # MinecraftServerStatus-Discord
 > In a Discord embed, shows the status of a Minecraft server.
 
-Prepare a channel for people to check your Minecraft Server status. Make it so only the bot can send messages there. Once the first status message is sent, the bot will update it every 5 minutes. Please, don't try to change the update time to less than 60 seconds; the API won't update its cache that fast.
-
 ## Self-hosting
+
+Prepare a channel for people to check your Minecraft Server status. Make it so only the bot can send messages there. Once the first status message is sent, the bot will update it every 5 minutes. Please, don't try to change the update time to less than 60 seconds; the API won't update its cache that fast.
 
 Want to self-host the bot? Create a Discord Bot on the [Discord Developer Dashboard](https://discord.com/developers/applications/). Once done, get your token and set it in the `config.json` file.
 
