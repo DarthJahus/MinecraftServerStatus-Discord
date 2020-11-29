@@ -1,7 +1,26 @@
+[![DiscordBot](https://img.shields.io/badge/Discord%20Bot-Invite-blueviolet)](https://discord.com/api/oauth2/authorize?client_id=701526567763050517&permissions=379968&redirect_uri=https%3A%2F%2Fkabyle-gamers.com%2Fminecraft&scope=bot)
+[![Donate](https://img.shields.io/badge/Donate-Jahus-ff69b4)](https://www.patreon.com/jahus)
+
 [![Discord](https://img.shields.io/discord/764789719032266752?label=Kabyle%20Minecraft%20on%20Discord)](https://discord.gg/PMHuPpD)
 
 # MinecraftServerStatus-Discord
 > In a Discord embed, shows the status of a Minecraft server.
+
+## Usage
+
+* `mc/link <server> [showUsers]`
+  > Link your Minecraft Server to your Discord Guild. The status will be shown in the same channel where you have sent the command.
+  > `<server>`: The address of your Minecraft Server in the form `sub.domain.ext` or `domain.ext`.
+  > `[showUsers]`: Optional. `True` or `False` (default). Whether to show the list of connected players. Don't set to `True` on massive servers.
+* `mc/unlink`
+  > Stop receiving updates about the Minecraft Server and delete the status message.
+
+**Notes**
+
+1. Only one Minecraft Server can be linked to a Discord Guild. Using `mc/link` again will overrite whatever settings you have previously applied.
+1. The bot has been made to minimize interactions and messages. By design, it will not message you if something is wrong. If the status message is not updating, please make sure you have correctly used the `mc/link` command. Try again if you are unsure.
+1. In case something is going wrong, have found a bug or have you a suggestion to make, you might contact me on Discord (`Jahus#9238`) or [Telegram](https://t.me/Jahus).
+1. If the bot is useful, consider making a donation [on Patreon](https://www.patreon.com/jahus).
 
 ## Self-hosting
 
