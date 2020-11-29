@@ -17,8 +17,9 @@
 
 **Notes**
 
+1. You need `Administrator` or `Manage Guild` permission in order to use this bot in your server.
 1. Only one Minecraft Server can be linked to a Discord Guild. Using `mc/link` again will overrite whatever settings you have previously applied.
-1. The bot has been made to minimize interactions and messages. By design, it will not message you if something is wrong. If the status message is not updating, please make sure you have correctly used the `mc/link` command. Try again if you are unsure.
+1. The bot has been made to minimize interactions and messages. By design, it will not message you if something is wrong (can't send message, can't reach the Minecraft Server, if you don't have the required permissions, etc.). If the status message is not updating, please make sure you have correctly used the `mc/link` command. Try again if you are unsure.
 1. In case something is going wrong, have found a bug or have you a suggestion to make, you might contact me on Discord (`Jahus#9238`) or [Telegram](https://t.me/Jahus).
 1. If the bot is useful, consider making a donation [on Patreon](https://www.patreon.com/jahus).
 
