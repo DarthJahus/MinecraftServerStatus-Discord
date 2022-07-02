@@ -3,6 +3,8 @@
 
 [![Discord](https://img.shields.io/discord/764789719032266752?label=Kabyle%20Minecraft%20on%20Discord)](https://discord.gg/PMHuPpD)
 
+⚠️ This project has been discontinued. The bot has been shut down. Feel free to build upon the actual code.
+
 # MinecraftServerStatus-Discord
 > In a Discord embed, shows the status of a Minecraft server.
 
