@@ -134,7 +134,8 @@ async def mc_server_status(server):
                     "Heroes": "%s `%i / %i`" % ("<:mc_stevevillager:1379612567772856410>", _req_json["players"]["online"], _req_json["players"]["max"]),
                 }
                 if server["channel_update"]["show_player_list"] and _req_json["players"]["online"] > 0:
-                    _server_data["Heroes"] += "\n* <:steve_cool:1379540820683657368> %s" % "\n* <:steve_cool:1379540820683657368> ".join([_player["name"] for _player in _req_json["players"]["list"]])
+                    if "list" in _req_json["players"]:
+                        _server_data["Heroes"] += "\n* <:steve_cool:1379540820683657368> %s" % "\n* <:steve_cool:1379540820683657368> ".join([_player["name"] for _player in _req_json["players"]["list"]])
                 if server["channel_update"]["show_ip"]:
                     _server_data["Actual IP"] = "%s `%s`" % (emoji.emojize(":desktop:"), _req_json["ip"])
                 for _key in _server_data:
