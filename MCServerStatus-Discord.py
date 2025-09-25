@@ -322,4 +322,8 @@ async def command_link_mc_server(
     await interaction.response.send_message(content=_answer, ephemeral=True)
 
 
-__client.run(__config["discord_bot_token"])
+try:
+    __client.run(__config["discord_bot_token"])
+except:
+    print("Connection issue. Please restart")
+    input()
