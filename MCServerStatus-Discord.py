@@ -6,10 +6,12 @@
 
 import json, requests, emoji
 from discord import Intents, Client, app_commands, Embed, errors as discord_errors, Interaction, Permissions
-from datetime import datetime, timezone, timedelta, tzinfo
+from datetime import datetime
 from asyncio import sleep
+from os.path import expandvars
 
 
+__ip_providers = ["https://icanhazip.com", "https://api.ipify.org/", "https://ident.me"]
 _intents = Intents.default()
 __client = Client(intents=_intents)
 __tree = app_commands.CommandTree(
@@ -23,6 +25,18 @@ __colors = {
     "online": 0x00ff00,
     "offline": 0xff0000
 }
+
+
+def get_ext_ip(providers):
+    _ext_ip = None
+    for _provider in providers:
+        try:
+            _request = requests.get(_provider)
+            _ext_ip = _request.content.decode('utf8').strip()
+            break
+        except:
+            print("ERROR: Provider %s unreachable" % _provider)
+    return _ext_ip
 
 
 def config_load():
@@ -55,12 +69,31 @@ async def start_bot():
 
 
 async def mc_server_status(server):
-        _req = requests.get("https://api.mcsrvstat.us/3/%s" % server["server_address"])
+        _server_address = None
+        if server["server_address"].split(':')[0].lower() == "auto":
+            _server_address = get_ext_ip(__ip_providers) + (':' + server["server_address"].split(':')[1]) if len(server["server_address"].split(':')) == 2 else ''
+            print(_server_address)
+            if _server_address is None:
+                print("No server IP for server %s" % server)
+                return
+        elif server["server_address"].split(':')[0].lower() == "file":
+            # Get address from file
+            try:
+                with open(expandvars(server["server_address_file"]), 'r', encoding='utf-8') as _f:
+                    _server_address = _f.readline().strip() + '' if len(server["server_address"].split(':')) == 1 else (':' + server["server_address"].split(':')[1])
+            except FileNotFoundError:
+                print("Error opening the file for address")
+                return
+        else:
+            _server_address = server["server_address"]
+
+        _req = requests.get("https://api.mcsrvstat.us/3/%s" % _server_address)
+
         if _req.status_code != 200:
-            print("Error contacting API for %s of Discord server %s : %s" % (server["server_address"], server["discord_server"], _req.status_code))
+            print("Error contacting API for %s of Discord server %s : %s" % (_server_address, server["discord_server"], _req.status_code))
         else:
             _req_json = _req.json()
-            print("Correctly contacted API for server %s" % server["server_address"])
+            print("Correctly contacted API for server %s" % _server_address)
 
             if server["ip_update"]["enabled"]:
                 _embed = Embed(
@@ -120,7 +153,7 @@ async def mc_server_status(server):
                     value="%s OFFLINE" % emoji.emojize("<:Skeleton_Skull_web:1379540672473989232>"),
                     inline=False
                 )
-                print("Server %s offline. Created embed." % server["server_address"])
+                print("Server %s offline. Created embed." % _server_address)
 
             else:
                 if server["channel_update"]["change_name"]:
