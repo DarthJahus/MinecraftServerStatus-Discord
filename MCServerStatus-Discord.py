@@ -90,7 +90,7 @@ async def mc_server_status(server):
         _req = requests.get("https://api.mcsrvstat.us/3/%s" % _server_address)
 
         if _req.status_code != 200:
-            print("Error contacting API for %s of Discord server %s : %s" % (_server_address, server["discord_server"], _req.status_code))
+            print("Error contacting API for %s of Discord server %s : %s" % (_server_address, server["guild_id"], _req.status_code))
         else:
             _req_json = _req.json()
             print("Correctly contacted API for server %s" % _server_address)
