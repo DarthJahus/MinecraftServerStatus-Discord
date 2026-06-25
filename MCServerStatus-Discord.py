@@ -1,16 +1,6 @@
 #!/usr/bin/python3
 """
 mc_status_bot.py – Discord bot for Minecraft server status updates.
-
-Changes vs previous version:
-- aiohttp replaces blocking requests (non-blocking in async context)
-- Structured logging replaces print()
-- Permission-error jail system (count → threshold → notify admin → disable guild)
-- /unlink no longer crashes when embed_message_id is missing or -1
-- Fixed identity comparison (is not → !=) on channel names
-- config_save() called once per loop cycle instead of per guild
-- `enabled` key always initialised in link_server_to_guild()
-- Bare except clauses replaced with typed exception handling
 """
 
 import json
@@ -36,6 +26,20 @@ log = logging.getLogger(__name__)
 
 JAIL_PERM_ERROR_THRESHOLD = 5   # consecutive Forbidden errors before jailing
 MCSRVSTAT_API = "https://api.mcsrvstat.us/3/%s"
+
+# Permissions required for the bot to function.
+# Tuples of (discord.py attribute name, human-readable label).
+# change_name and ip_update permissions are checked separately at runtime.
+REQUIRED_PERMS: list[tuple[str, str]] = [
+    ("send_messages",      "Send Messages"),
+    ("read_message_history", "Read Message History"),
+    ("embed_links",        "Embed Links"),
+    ("use_external_emojis", "Use External Emojis"),
+    ("change_nickname",    "Change Nickname"),
+]
+REQUIRED_PERMS_MANAGE_CHANNELS: tuple[str, str] = (
+    "manage_channels", "Manage Channels"
+)
 
 
 # ── Discord setup ─────────────────────────────────────────────────────────────
@@ -77,6 +81,23 @@ def _get_server_config(guild_id: int) -> dict | None:
         if s["guild_id"] == guild_id:
             return s
     return None
+
+
+def _check_permissions(guild, change_name: bool = False) -> list[str]:
+    """
+    Check that the bot has all required permissions in the given guild.
+    Returns a list of human-readable labels for missing permissions (empty = all good).
+    """
+    bot_perms = guild.me.guild_permissions
+    missing = [
+        label for attr, label in REQUIRED_PERMS
+        if not getattr(bot_perms, attr, False)
+    ]
+    if change_name:
+        attr, label = REQUIRED_PERMS_MANAGE_CHANNELS
+        if not getattr(bot_perms, attr, False):
+            missing.append(label)
+    return missing
 
 
 def _record_perm_error(server: dict) -> None:
@@ -509,6 +530,20 @@ async def command_unjail(interaction: Interaction):
         await interaction.response.send_message("ℹ️ Le bot n'est pas en pause sur ce serveur.", ephemeral=True)
         return
 
+    # Check permissions before re-enabling
+    missing = _check_permissions(
+        interaction.guild,
+        change_name=server.get("channel_update", {}).get("change_name", False)
+    )
+    if missing:
+        lines = "\n".join(f"• **{p}**" for p in missing)
+        await interaction.response.send_message(
+            f"❌ Le bot manque encore des permissions suivantes :\n{lines}\n\n"
+            f"Corrigez-les, puis relancez `/unjail`.",
+            ephemeral=True
+        )
+        return
+
     server["jailed"] = False
     server["perm_errors"] = 0
 
@@ -563,6 +598,19 @@ async def command_link_mc_server(
     default_server_name: str = "",
     use_motd_as_default_server_name: bool = False,
 ):
+    missing = _check_permissions(
+        interaction.guild,
+        change_name=change_channel_name
+    )
+    if missing:
+        lines = "\n".join(f"• **{p}**" for p in missing)
+        await interaction.response.send_message(
+            f"❌ Le bot manque des permissions nécessaires :\n{lines}\n\n"
+            f"Corrigez-les et relancez `/link`.",
+            ephemeral=True
+        )
+        return
+
     answer = await link_server_to_guild(
         discord_server=interaction.guild_id,
         server_address=server_address,
