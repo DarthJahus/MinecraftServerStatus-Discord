@@ -6,10 +6,10 @@ mc_status_bot.py – Discord bot for Minecraft server status updates.
 import json
 import logging
 import asyncio
-import aiohttp
 
 from discord import Intents, Client, app_commands, Embed, errors as discord_errors, Interaction
 from datetime import datetime
+from mcstatus import JavaServer
 import emoji
 
 
@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 JAIL_PERM_ERROR_THRESHOLD = 5   # consecutive Forbidden errors before jailing
-MCSRVSTAT_API = "https://api.mcsrvstat.us/3/%s"
+MC_QUERY_TRIES = 1   # tentatives de ping direct avant de considerer le serveur offline
 
 # Permissions required for the bot to function.
 # Tuples of (discord.py attribute name, human-readable label).
@@ -173,18 +173,6 @@ async def _check_jail_threshold(server: dict) -> None:
         log.warning("Could not rename bot in guild %d.", guild.id)
 
 
-# ── HTTP session ──────────────────────────────────────────────────────────────
-
-_http_session: aiohttp.ClientSession | None = None
-
-
-async def get_http_session() -> aiohttp.ClientSession:
-    global _http_session
-    if _http_session is None or _http_session.closed:
-        _http_session = aiohttp.ClientSession()
-    return _http_session
-
-
 # ── Discord events ────────────────────────────────────────────────────────────
 
 @__client.event
@@ -195,47 +183,47 @@ async def on_ready():
 
 
 async def start_bot():
-    async with aiohttp.ClientSession() as session:
-        while True:
-            dirty = False
-            for server in __config["guilds"]:
-                if not server.get("enabled", False):
-                    continue
-                if server.get("jailed", False):
-                    log.info("Skipping jailed guild %d.", server["guild_id"])
-                    continue
-                changed = await mc_server_status(server, session)
-                if changed:
-                    dirty = True
-            if dirty:
-                config_save(__config)
-            log.info("Sleeping for %d s.", __config["sleep_time"])
-            await asyncio.sleep(__config["sleep_time"])
-            log.info("Wait complete.")
+    while True:
+        dirty = False
+        for server in __config["guilds"]:
+            if not server.get("enabled", False):
+                continue
+            if server.get("jailed", False):
+                log.info("Skipping jailed guild %d.", server["guild_id"])
+                continue
+            changed = await mc_server_status(server)
+            if changed:
+                dirty = True
+        if dirty:
+            config_save(__config)
+        log.info("Sleeping for %d s.", __config["sleep_time"])
+        await asyncio.sleep(__config["sleep_time"])
+        log.info("Wait complete.")
 
 
 # ── Status update ─────────────────────────────────────────────────────────────
 
-async def mc_server_status(server: dict, session: aiohttp.ClientSession) -> bool:
+async def mc_server_status(server: dict) -> bool:
     """
-    Fetch the MC server status and update the Discord embed.
+    Ping directement le serveur Minecraft (Server List Ping, protocole natif)
+    et met a jour l'embed Discord. Ne depend plus d'une API tierce
+    (api.mcsrvstat.us) : la resolution DNS et la requete de statut sont
+    faites en direct via mcstatus.
     Returns True if config was modified (embed_message_id updated).
     """
-    url = MCSRVSTAT_API % server["server_address"]
+    address = server["server_address"]
     try:
-        async with session.get(url) as resp:
-            if resp.status != 200:
-                log.error(
-                    "API error for %s (guild %d): HTTP %d",
-                    server["server_address"], server["guild_id"], resp.status
-                )
-                return False
-            req_json = await resp.json()
-    except aiohttp.ClientError as e:
-        log.error("HTTP request failed for %s: %s", server["server_address"], e)
+        mc_server = JavaServer.lookup(address)
+        status = await mc_server.async_status(tries=MC_QUERY_TRIES)
+        req_json = _status_to_dict(status, mc_server)
+    except (OSError, asyncio.TimeoutError) as e:
+        log.info("Serveur %s hors ligne ou injoignable : %s", address, e)
+        req_json = {"online": False}
+    except Exception as e:
+        log.error("Erreur inattendue en interrogeant %s : %s", address, e)
         return False
 
-    log.info("API response received for %s.", server["server_address"])
+    log.info("Statut recupere pour %s.", address)
     dirty = False
 
     # ── IP update embed ───────────────────────────────────────────────────────
@@ -246,6 +234,30 @@ async def mc_server_status(server: dict, session: aiohttp.ClientSession) -> bool
     dirty |= await _update_embed_status(server, req_json)
 
     return dirty
+
+
+def _status_to_dict(status, mc_server: JavaServer) -> dict:
+    """
+    Traduit une reponse mcstatus (JavaStatusResponse) vers le meme format
+    de dict que celui auparavant renvoye par l'API mcsrvstat.us, pour ne
+    rien changer dans _update_embed_ip / _update_embed_status.
+    """
+    players_list = []
+    if status.players.sample:
+        players_list = [{"name": p.name} for p in status.players.sample]
+
+    return {
+        "online": True,
+        "ip": mc_server.address.host,
+        "port": mc_server.address.port,
+        "motd": {"clean": [status.motd.to_plain()]},
+        "version": status.version.name,
+        "players": {
+            "online": status.players.online,
+            "max": status.players.max,
+            "list": players_list,
+        },
+    }
 
 
 async def _send_or_edit_embed(
@@ -638,3 +650,4 @@ except KeyboardInterrupt:
 except Exception as e:
     log.critical("Fatal error: %s", e)
     input("Press Enter to exit.")
+
