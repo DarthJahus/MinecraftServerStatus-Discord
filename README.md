@@ -11,8 +11,12 @@
   > Stop receiving updates about the Minecraft Server. You can choose to delete the status messages.
 
 ### Parameters
-* `server_address`: Required. The address (or IP address) of your Minecraft server. Add port number if not default. Format: `IP.ADDRESS:PORT` or `sub.domain.ext:port` or `domain.ext:port`.
-* `change_channel_name`: Optional. Default: `False`. Change the name of the channel where the status message is sent. Default names are 🟩-online and 🟥-offline.
+* `server_address`: Required. Can be either:
+  * A plain IP or hostname, with optional port. Example: `mc.mydomain.com`, `mc.mydomain.com:25569`, `69.543.8.12:25569`.
+  * `auto`, with optional port. Example: `auto` or `auto:25569`. The script will automatically resolve your external IP.
+  * `file`, with optional port.</br>The script will get your hostname or IP from the file defined in `server_address_file`.</br>Example: `"server_address": "file:25565"`
+* `server_address_file`: Required if `server_address` is defined to `file`.</br>Path to a file containing a single line with the IP or hostname. Might contain a port number. Environment variables are supported.</br>Example: `"server_address_file": "$HOME/mcserver/ngrok.txt"`, where `ngrok.txt` contains `something.ngrok.io`.
+* `change_channel_name`: Optional. Default: `False`. Change the name of the channel where the status message is sent. Default names are `🟩-online` and `🟥-offline`.
 * `channel_name_online`: Optional. Default: `🟩-online`. Name of the status channel when the server is online.
 * `channel_name_offline`: Optional. Default: `🟥-offline`. Name of the status channel when the server is offline.
 * `show_player_list`: Optional. Default: `True`. Show a list of all the connected players in the status message.
