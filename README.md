@@ -57,8 +57,5 @@ In a `config.json` file, store the following settings:
 ### Running as a service
 To run the bot at your server's startup, register the `.service` file with `systemctl` and enable it.
 
-## Minecraft Server Status
-This bot uses the [Minecraft Server Status API](https://mcsrvstat.us/), that's completely free. If you appreciate their work, consider [donating to them on PayPal](https://www.paypal.com/paypalme/spirit55555).
-
 ## Contributions
 Feel free to build upon the actual code.
